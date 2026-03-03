@@ -1,1 +1,189 @@
 
+📊 Automatic Header Row Detection for Excel Files
+🚀 Overview
+
+This project implements a heuristic-based algorithm to automatically detect the header row in semi-structured Excel files.
+
+In many real-world business spreadsheets, column headers are not located on the first row. Files often contain:
+
+Titles
+
+Metadata
+
+Blank rows
+
+Notes
+
+Logos
+
+This tool scans the top rows of a worksheet and determines which row most likely contains the column names.
+
+The detected row is then automatically passed to pandas for structured data loading.
+
+🎯 Problem Statement
+
+Traditional pandas.read_excel() assumes the header is located at row 0.
+In practice, this assumption frequently fails for business data.
+
+The challenge:
+
+Automatically detect the correct header row without manual inspection.
+
+🧠 Algorithm Design
+
+The solution uses a weighted heuristic scoring system based on four structural signals:
+
+Feature	Description	Weight
+Fill Ratio	Ratio of non-empty cells	×3
+String Ratio	Proportion of text values	×4
+Bold Ratio	Proportion of bold-formatted cells	×3
+Depth Penalty	Penalizes rows further down	−0.1 × row index
+
+Each row receives a composite score:
+
+Score=3⋅FillRatio+4⋅StringRatio+3⋅BoldRatio−0.1⋅RowIndex
+Score=3⋅FillRatio+4⋅StringRatio+3⋅BoldRatio−0.1⋅RowIndex
+
+The row with the highest score is selected as the header.
+
+🔎 Why These Features?
+1️⃣ Fill Ratio
+
+Headers typically populate most columns.
+
+2️⃣ String Ratio
+
+Column names are generally text-based, unlike data rows that contain numbers or mixed types.
+
+3️⃣ Bold Formatting
+
+Headers are often visually emphasized in professional spreadsheets.
+
+4️⃣ Positional Prior
+
+Headers usually appear near the top of the file.
+
+⚙️ Implementation
+Header Detection Function
+def detect_header_row(filepath, max_rows_to_scan=30):
+Workflow
+
+Load Excel file using openpyxl
+
+Scan first N rows (default = 30)
+
+Compute weighted score per row
+
+Select row with highest score
+
+Load dataframe using detected header
+
+Example Usage
+header_line = detect_header_row("file.xlsx")
+df = pd.read_excel("file.xlsx", header=header_line - 1)
+
+⚠ Note: openpyxl uses 1-based indexing, while pandas uses 0-based indexing.
+
+📈 Time Complexity
+
+Let:
+
+n = number of scanned rows (≤ 30)
+
+m = number of columns
+
+Time complexity:
+
+O(n × m)
+
+The algorithm is efficient and scalable for large spreadsheets.
+
+🏗 Architecture
+Excel File
+     ↓
+Row Scan (Top N Rows)
+     ↓
+Feature Extraction
+     ↓
+Weighted Scoring
+     ↓
+Best Row Selection
+     ↓
+Pandas DataFrame Load
+✅ Strengths
+
+Fully interpretable heuristic model
+
+No training data required
+
+Fast and lightweight
+
+Works on real-world business files
+
+Seamless Pandas integration
+
+Formatting-aware detection (bold support)
+
+🔬 When to Use This
+
+Ideal for:
+
+Data preprocessing pipelines
+
+Automated ETL workflows
+
+Business data ingestion systems
+
+Internship / analytics projects involving messy Excel data
+
+🔮 Possible Improvements
+
+Multi-sheet support
+
+Confidence score thresholding
+
+Additional statistical features (numeric variance, uniqueness ratio)
+
+Hybrid ML-based enhancement
+
+Logging & debugging mode
+
+📦 Dependencies
+pip install openpyxl pandas
+🧪 Example Use Case
+
+Before:
+
+Row 1: Company Report 2024
+Row 2: Confidential
+Row 3: (blank)
+Row 4: Date | Client | Revenue | Region   ← Actual header
+Row 5+: Data rows
+
+After running detection:
+
+df = pd.read_excel(file, header=3)
+
+Correctly structured dataframe without manual inspection.
+
+🎓 Learning Outcomes
+
+This project demonstrates:
+
+Heuristic algorithm design
+
+Feature engineering for semi-structured data
+
+Excel metadata extraction
+
+Practical data engineering problem-solving
+
+Clean integration between openpyxl and pandas
+
+📌 Technical Summary
+
+This project implements a:
+
+Semi-structure-aware heuristic scoring system for dynamic header detection in spreadsheet data.
+
+It leverages structural, statistical, and formatting signals to robustly identify column headers in real-world Excel files.
