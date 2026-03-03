@@ -1,118 +1,187 @@
-📊 AutoHeader: Intelligent Excel Header Detection
-A lightweight, heuristic-based algorithm for automatically detecting header rows in messy business spreadsheets.
-https://python.org
-https://pandas.pydata.org
-LICENSE
-🎯 The Problem
-Real-world Excel files are messy. Unlike clean datasets, business spreadsheets often contain:
-Table
-Row	Content
-1	Company Logo / Title
-2	"Confidential - Internal Use Only"
-3	(blank)
-4	Date | Client | Revenue | Region ← Actual header
-5+	Data rows
-Traditional approach fails:
-Python
-Copy
-df = pd.read_excel("report.xlsx")  # Assumes row 0 = headers ❌
-Our solution:
-Python
-Copy
-header_row = detect_header_row("report.xlsx")  # Returns 4
-df = pd.read_excel("report.xlsx", header=header_row - 1)  # ✅ Perfect
-🧠 How It Works
-The algorithm scores each candidate row using four interpretable signals:
-Table
-Signal	Rationale	Weight
-Fill Ratio	Headers typically populate most columns	×3
-String Ratio	Column names are text, not numbers	×4
-Bold Formatting	Visual emphasis indicates headers	×3
-Depth Penalty	Headers appear near the top	−0.1 × row_index
-Scoring Formula:
-Score=3(Fill)+4(String)+3(Bold)−0.1(Row Index) 
-The row with the highest composite score is selected as the header.
-🚀 Quick Start
-Installation
-bash
-Copy
+📊 Automatic Header Row Detection for Excel Files
+🚀 Overview
+
+This project implements a heuristic-based algorithm to automatically detect the header row in semi-structured Excel files.
+
+In real-world business spreadsheets, column headers are often not located on the first row. Files may contain:
+
+Titles
+
+Metadata
+
+Blank rows
+
+Notes
+
+Logos or formatting elements
+
+This tool scans the top rows of a worksheet and determines which row most likely contains the column names.
+The detected row is then automatically passed to pandas for structured data loading.
+
+🎯 Problem Statement
+
+The standard function:
+
+pandas.read_excel()
+
+assumes the header is located at row 0.
+
+In practice, this assumption frequently fails when working with business or operational Excel files.
+
+Objective
+
+Automatically detect the correct header row without manual inspection.
+
+🧠 Algorithm Design
+
+The solution relies on a weighted heuristic scoring system based on four structural signals.
+
+🔢 Scoring Formula
+Score=3×FillRatio+4×StringRatio+3×BoldRatio−0.1×RowIndex
+Score=3×FillRatio+4×StringRatio+3×BoldRatio−0.1×RowIndex
+
+The row with the highest score is selected as the header.
+
+📌 Feature Engineering
+1️⃣ Fill Ratio (Weight = 3)
+
+Ratio of non-empty cells in a row.
+
+Headers usually populate most columns and are rarely sparse.
+
+2️⃣ String Ratio (Weight = 4)
+
+Proportion of text values among non-empty cells.
+
+Column names are typically text-based, whereas data rows often contain numbers or mixed types.
+
+This is the most influential feature.
+
+3️⃣ Bold Ratio (Weight = 3)
+
+Proportion of bold-formatted cells.
+
+Headers are often visually emphasized using bold formatting in professional spreadsheets.
+
+4️⃣ Depth Penalty
+−0.1×RowIndex
+−0.1×RowIndex
+
+Rows appearing further down in the file are penalized, reflecting the assumption that headers are generally near the top.
+
+⚙️ Implementation Workflow
+
+Load Excel file using openpyxl
+
+Scan first N rows (default = 30)
+
+Compute feature values for each row
+
+Calculate weighted score
+
+Select row with maximum score
+
+Load dataframe using pandas with detected header
+
+🧪 Example Usage
+header_line = detect_header_row("file.xlsx")
+df = pd.read_excel("file.xlsx", header=header_line - 1)
+⚠ Important
+
+openpyxl uses 1-based indexing
+
+pandas uses 0-based indexing
+
+Therefore, the detected row index must be adjusted by subtracting 1.
+
+📈 Time Complexity
+
+Let:
+
+n = number of scanned rows (≤ 30)
+
+m = number of columns
+
+Time complexity:
+
+O(n × m)
+
+The algorithm is efficient and scalable for large spreadsheets.
+
+🏗 Architecture Pipeline
+Excel File
+     ↓
+Row Scan (Top N Rows)
+     ↓
+Feature Extraction
+     ↓
+Weighted Scoring
+     ↓
+Best Row Selection
+     ↓
+Load DataFrame in Pandas
+✅ Project Strengths
+
+Fully interpretable heuristic model
+
+No training data required
+
+Fast and lightweight
+
+Works on real-world business Excel files
+
+Seamless integration with pandas
+
+Formatting-aware detection (bold support)
+
+🔬 Ideal Use Cases
+
+Data preprocessing pipelines
+
+Automated ETL workflows
+
+Business data ingestion systems
+
+Analytics projects involving messy Excel files
+
+🔮 Possible Improvements
+
+Multi-sheet detection support
+
+Confidence score thresholding
+
+Additional statistical features (variance, uniqueness ratio)
+
+Hybrid ML-based enhancement
+
+Logging and debugging mode
+
+📦 Dependencies
 pip install openpyxl pandas
-Usage
-Python
-Copy
-from autoheader import detect_header_row
-import pandas as pd
+🎓 Learning Outcomes
 
-# Detect header automatically
-file_path = "messy_report.xlsx"
-header_line = detect_header_row(file_path, max_rows_to_scan=30)
+This project demonstrates:
 
-# Load with correct header
-df = pd.read_excel(file_path, header=header_line - 1)
+Heuristic algorithm design
 
-print(f"Detected header at row {header_line}")
-print(df.head())
-Complete Example
-Python
-Copy
-from autoheader import detect_header_row
-import pandas as pd
+Feature engineering for semi-structured data
 
-# Before: Manual inspection required
-# df = pd.read_excel("sales_data.xlsx")  # Wrong headers!
+Excel metadata extraction
 
-# After: Fully automated
-header = detect_header_row("sales_data.xlsx")
-df = pd.read_excel("sales_data.xlsx", header=header - 1)
+Practical data engineering problem-solving
 
-# Result: Clean, structured dataframe ready for analysis
-⚙️ API Reference
-detect_header_row(filepath, max_rows_to_scan=30)
-Table
-Parameter	Type	Default	Description
-filepath	str	—	Path to Excel file (.xlsx)
-max_rows_to_scan	int	30	Maximum rows to evaluate
-Returns: int — 1-based row index of detected header (matches Excel's row numbering)
-Note: Convert to 0-based index for pandas: pandas_header = detected_row - 1
-🏗️ Project Structure
-plain
-Copy
-autoheader/
-├── autoheader.py          # Core detection algorithm
-├── example.py             # Usage demonstration
-├── sample_data/
-│   └── messy_report.xlsx  # Test file with metadata
-├── tests/
-│   └── test_detector.py   # Unit tests
-└── README.md
-📈 Performance
-Time Complexity: O(n×m)  where n≤30  rows scanned, m  = columns
-Average Runtime: <50ms for 10-column files
-No training data required — works out of the box
-✅ Why This Approach?
-Table
-Feature	Benefit
-Interpretable	Debuggable scoring system, not a black box
-Zero Dependencies	Only openpyxl and pandas
-Formatting-Aware	Leverages bold styling cues
-Production-Ready	Handles edge cases (blank rows, merged cells)
-🔬 Real-World Results
-Tested on 50+ business spreadsheets from finance, sales, and operations teams:
-Table
-Metric	Result
-Accuracy	94% (47/50 files)
-False Positives	6% (usually multi-header files)
-Average Detection Time	12ms
-🎓 Skills Demonstrated
-Algorithm Design: Heuristic scoring with weighted features
-Data Engineering: Bridging openpyxl and pandas ecosystems
-Software Engineering: Clean API design with error handling
-Business Acumen: Solving real operational pain points
-🔮 Roadmap
-[ ] Multi-sheet support with sheet-by-sheet detection
-[ ] Confidence scoring with threshold-based fallback
-[ ] Additional signals: uniqueness ratio, data type consistency
-[ ] CLI tool for batch processing
-📄 License
-MIT License — free for personal and commercial use.
-⭐ Star this repo if it saved you from manually inspecting Excel files!
+Clean integration between openpyxl and pandas
+
+📌 Technical Summary
+
+This project implements a semi-structure-aware heuristic scoring system for dynamic header detection in spreadsheet data.
+
+It leverages structural, statistical, and formatting signals to robustly identify column headers in real-world Excel files.
+
+If you'd like, I can now:
+
+Make it more “Data Engineering portfolio” oriented
+
+Add badges and project structure
+
+Or make a version tailored specifically for internship applications in Data / Analytics 🚀
