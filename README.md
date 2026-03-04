@@ -6,3 +6,5 @@ Creation, training of an random forest model to detect the header inside an exce
 ## Result 
 
 The final model that I use is an lightGBM model (detail in the random_forest_model), the result of this model is satisfying. 
+
+![ROC Curve](Images/Capture d'écran 2026-03-04 105010.png)
