@@ -222,8 +222,6 @@ y_train, y_test = y[train_idx], y[test_idx]
 groups_train, groups_test = groups[train_idx], groups[test_idx]
 
 
-n_estimators = 300
-
 model = lgb.LGBMClassifier(
     n_estimators=400,
     learning_rate=0.05,
@@ -362,3 +360,4 @@ joblib.dump(model, "header_detector.pkl")
 
 
 # %%
+
