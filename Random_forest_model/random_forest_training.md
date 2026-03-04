@@ -2,31 +2,9 @@
 
 ## Comparative Study Between Random Forest and LightGBM Models
 
-### 1. Introduction
-
 The objective of this project is to design a machine learning system capable of automatically detecting the header row within Excel sheets. The problem is formulated as a supervised binary classification task at the row level: for each row in a sheet, the model predicts whether it corresponds to the true header.
 
 Because each sheet contains exactly one header row and multiple non-header rows, the task presents a strong class imbalance and requires not only accurate classification but also reliable probability ranking.
-
-### 2. Feature Engineering Strategy
-
-Before discussing the models themselves, it is important to understand the feature engineering approach, as both models rely on the same structured feature representation.
-
-Each row of an Excel sheet is transformed into a numerical feature vector describing its structural, textual, and formatting characteristics. Only the first twenty rows of each sheet are analyzed, as headers are typically located near the top.
-
-The engineered features capture multiple dimensions of information.
-
-First, structural characteristics are extracted. The fill_ratio measures the proportion of non-empty cells within a row. Header rows typically exhibit high density. The max_empty_streak captures long consecutive empty sequences, which are uncommon in headers. The row_position normalizes the vertical location of the row within the sheet, since headers are more likely to appear near the top.
-
-Second, content-type features describe the nature of the cell values. The str_ratio and num_ratio measure the proportion of textual versus numeric entries. Header rows generally contain mostly strings, while data rows contain more numerical values. The derived num_to_str_ratio reinforces this contrast. The unique_ratio evaluates redundancy in the row, since headers usually contain distinct column names.
-
-Third, textual statistics are computed. The average and standard deviation of string length (avg_str_len, std_str_len) help distinguish short structured labels from long descriptive metadata. The upper_ratio captures capitalization patterns common in headers. The keyword_ratio measures the presence of domain-relevant keywords such as “date”, “name”, “amount”, “total”, “id”, and “ref”. The special_char_ratio detects punctuation usage patterns.
-
-Fourth, formatting features are extracted from Excel styling. The bold_ratio and colored_ratio quantify whether formatting is applied, as headers are frequently bolded or highlighted.
-
-Finally, contextual delta features measure structural contrast with the next row. The differences delta_str_ratio and delta_num_ratio are particularly important because headers are often followed by numeric data rows, creating a sharp transition in content distribution.
-
-This multi-dimensional representation enables the models to capture structural regularities that distinguish header rows from surrounding content.
 
 ## Part I — Random Forest Model
 
