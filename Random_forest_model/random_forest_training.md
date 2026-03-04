@@ -8,20 +8,20 @@ Because each sheet contains exactly one header row and multiple non-header rows,
 
 ## Part I — Random Forest Model
 
-### 3. The Random Forest Approach
+###  The Random Forest Approach
 
 The first implementation relied on a Random Forest classifier. Random Forest is an ensemble method based on decision trees trained using bootstrap aggregation (bagging). Each tree is built independently on a random subset of data and features. The final prediction is obtained by averaging predictions across all trees.
 
 The advantage of Random Forest lies in its robustness. It handles non-linear relationships naturally, requires limited preprocessing, and is resistant to overfitting due to feature randomness and bootstrapping. As a baseline model for structured tabular data, it is a logical first choice.
 
 
-### 4. Random Forest Parameters
+###  Random Forest Parameters
 
 In the initial notebook implementation, the Random Forest model was configured using parameters controlling tree complexity and generalization. The number of estimators determined how many trees were built. The maximum depth constrained how complex each tree could become. The minimum samples per split and class weighting were used to address the strong imbalance between header and non-header rows.
 
 Because each sheet contains only one positive sample and many negatives, the imbalance ratio is structurally high. While Random Forest can partially compensate for imbalance using class weights, it does not inherently optimize probability ranking.
 
-### 5. Observed Limitations
+###  Observed Limitations
 
 Although the Random Forest model provided meaningful feature importance insights, it did not perform reliably in production scenarios.
 
@@ -35,16 +35,14 @@ For these reasons, the Random Forest approach did not meet performance expectati
 
 ## Part II — LightGBM Model
 
-### 6. Introduction to LightGBM
+###  Introduction to LightGBM
 
 The second model replaced Random Forest with LightGBM, a gradient boosting framework optimized for efficiency and performance on tabular data.
 
 Unlike Random Forest, which builds trees independently, LightGBM constructs trees sequentially. Each new tree is trained to correct the residual errors of the previous ensemble. This boosting mechanism reduces bias and progressively sharpens the decision boundary.
 
-You may insert a boosting diagram here:
 
-![Gradient Boosting Mechanism](images/boosting_diagram.png)
-### 7. Conceptual Differences with Random Forest
+### Conceptual Differences with Random Forest
 
 The fundamental difference lies in the learning strategy. Random Forest reduces variance by averaging independent trees, while LightGBM reduces both bias and variance by iteratively minimizing prediction errors.
 
@@ -52,7 +50,7 @@ In ranking-sensitive problems such as header detection, boosting provides a stru
 
 Furthermore, LightGBM is optimized for speed and memory efficiency, using histogram-based splitting and leaf-wise tree growth. This makes it both faster and often more accurate than traditional ensemble methods.
 
-### 8. LightGBM Configuration
+### LightGBM Configuration
 
 The implemented LightGBM model was configured with 400 estimators and a learning rate of 0.05. This relatively low learning rate ensures gradual refinement of predictions while maintaining stability.
 
@@ -64,7 +62,7 @@ Most importantly, the post-processing strategy was redesigned. Instead of applyi
 
 This transformation effectively converts the task into a constrained ranking problem, significantly improving stability.
 
-### 9. Performance and Final Assessment
+### Performance and Final Assessment
 
 Compared to Random Forest, the LightGBM model demonstrated superior ranking behavior and improved balance between precision and recall. False negatives were reduced, and probability separation between header and non-header rows became more pronounced.
 
