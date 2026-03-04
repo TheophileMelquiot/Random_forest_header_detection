@@ -14,9 +14,6 @@ The first implementation relied on a Random Forest classifier. Random Forest is 
 
 The advantage of Random Forest lies in its robustness. It handles non-linear relationships naturally, requires limited preprocessing, and is resistant to overfitting due to feature randomness and bootstrapping. As a baseline model for structured tabular data, it is a logical first choice.
 
-You may insert a diagram here to illustrate bagging:
-
-![Random Forest Bagging](images/random_forest_diagram.png)
 
 ### 4. Random Forest Parameters
 
