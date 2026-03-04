@@ -201,6 +201,7 @@ from sklearn.metrics import (
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.model_selection import GroupShuffleSplit
+from sklearn.model_selection import GroupKFold
 
 warnings.filterwarnings(
     "ignore",
@@ -213,16 +214,69 @@ with open("C:/Users/K555275/OneDrive - Banque de France/Bureau/IA/new_files/labe
 
 X, y, groups = build_training_data("C:/Users/K555275/OneDrive - Banque de France/Bureau/IA/new_files/excel_file", labels_dict)
 
-gss = GroupShuffleSplit(test_size=0.2, random_state=42)
+gkf = GroupKFold(n_splits=5)
 
-train_idx, test_idx = next(gss.split(X, y, groups))
+cv_results = []
+
+for fold, (train_idx, test_idx) in enumerate(gkf.split(X, y, groups)):
+    print(f"\n================ FOLD {fold+1} ================\n")
+
+    X_train, X_test = X[train_idx], X[test_idx]
+    y_train, y_test = y[train_idx], y[test_idx]
+    groups_train, groups_test = groups[train_idx], groups[test_idx]
+
+    model = lgb.LGBMClassifier(
+        n_estimators=400,
+        learning_rate=0.05,
+        num_leaves=20,
+        max_depth=6,
+        min_child_samples=20,
+        subsample=0.8,
+        colsample_bytree=0.8,
+        random_state=42
+    )
+
+    model.fit(X_train, y_train)
+
+    y_proba = model.predict_proba(X_test)[:, 1]
+
+    test_df = pd.DataFrame({
+        "proba": y_proba,
+        "true": y_test,
+        "group": groups_test
+    })
+
+    threshold = 0.35
+    idx_max = test_df.groupby("group")["proba"].idxmax()
+
+    test_df["pred"] = 0
+    for idx in idx_max:
+        if test_df.loc[idx, "proba"] > threshold:
+            test_df.loc[idx, "pred"] = 1
+
+    y_pred = test_df["pred"].values
+
+    roc_auc = roc_auc_score(y_test, y_proba)
+    pr_auc = average_precision_score(y_test, y_proba)
+
+    print(classification_report(y_test, y_pred))
+    print(f"ROC-AUC: {roc_auc:.4f}")
+    print(f"PR-AUC: {pr_auc:.4f}")
+
+    cv_results.append({
+        "fold": fold+1,
+        "roc_auc": roc_auc,
+        "pr_auc": pr_auc
+    })
+
+print("\n==== CROSS-VALIDATION SUMMARY ====")
+print(pd.DataFrame(cv_results))
 
 X_train, X_test = X[train_idx], X[test_idx]
 y_train, y_test = y[train_idx], y[test_idx]
 groups_train, groups_test = groups[train_idx], groups[test_idx]
 
-
-model = lgb.LGBMClassifier(
+final_model = lgb.LGBMClassifier(
     n_estimators=400,
     learning_rate=0.05,
     num_leaves=20,
@@ -233,12 +287,42 @@ model = lgb.LGBMClassifier(
     random_state=42
 )
 
-model.fit(
+final_model.fit(
     X_train,
     y_train,
     eval_set=[(X_test, y_test)],
     eval_metric="auc")
 
+with open("C:/Users/K555275/OneDrive - Banque de France/Bureau/IA/new_files/header_detection_output_model.json", encoding="utf-8") as f:
+    labels_dict_test = json.load(f)  # {"file1.xlsx": 3, "file2.xlsx": 1, ...}
+
+X_ext, y_ext, groups_ext = build_training_data(
+    "C:/Users/K555275/OneDrive - Banque de France/Bureau/IA/new_files/excel_external_test/",
+    labels_dict_test
+)
+
+y_ext_proba = final_model.predict_proba(X_ext)[:, 1]
+
+ext_df = pd.DataFrame({
+    "proba": y_ext_proba,
+    "true": y_ext,
+    "group": groups_ext
+})
+
+threshold = 0.35
+idx_max = ext_df.groupby("group")["proba"].idxmax()
+
+ext_df["pred"] = 0
+for idx in idx_max:
+    if ext_df.loc[idx, "proba"] > threshold:
+        ext_df.loc[idx, "pred"] = 1
+
+y_ext_pred = ext_df["pred"].values
+
+print("\n===== EXTERNAL VALIDATION RESULTS =====")
+print(classification_report(y_ext, y_ext_pred))
+print("ROC-AUC:", roc_auc_score(y_ext, y_ext_proba))
+print("PR-AUC:", average_precision_score(y_ext, y_ext_proba))
 
 
 # ===============================
@@ -327,32 +411,32 @@ print(f"False Positives (FP): {fp}")
 print(f"False Negatives (FN): {fn}")
 print(f"True Positives  (TP): {tp}")
 
-importance_df.plot(
-    kind="barh",
-    x="feature",
-    y="importance",
-    legend=False
-)
-
-plt.gca().invert_yaxis()
-plt.title("Feature Importance - Random Forest")
-plt.show()
-
 print("\nFeature Importances:\n")
 print(importance_df)
 
 # ===============================
-# 5️⃣ ROC Curve
+# ROC + Precision-Recall in ONE FIGURE
 # ===============================
-RocCurveDisplay.from_predictions(y_test, y_proba)
-plt.title("ROC Curve")
-plt.show()
 
-# ===============================
-# 6️⃣ Precision-Recall Curve
-# ===============================
-PrecisionRecallDisplay.from_predictions(y_test, y_proba)
-plt.title("Precision-Recall Curve")
+fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+
+# ROC Curve
+RocCurveDisplay.from_predictions(
+    y_test,
+    y_proba,
+    ax=axes[0]
+)
+axes[0].set_title("ROC Curve")
+
+# Precision-Recall Curve
+PrecisionRecallDisplay.from_predictions(
+    y_test,
+    y_proba,
+    ax=axes[1]
+)
+axes[1].set_title("Precision-Recall Curve")
+
+plt.tight_layout()
 plt.show()
 
 # Save the model
@@ -360,4 +444,3 @@ joblib.dump(model, "header_detector.pkl")
 
 
 # %%
-
