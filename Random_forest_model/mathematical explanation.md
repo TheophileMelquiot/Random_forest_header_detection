@@ -1,8 +1,8 @@
 # Mathematical Formulation and Model Interpretation
 
-## 10. Mathematical Foundations of the Models
+## Mathematical Foundations of the Models
 
-### 10.1 Random Forest — Formal Definition
+### Random Forest — Formal Definition
 
 Random Forest is based on an ensemble of decision trees trained using bootstrap aggregation.
 
@@ -35,7 +35,7 @@ Random Forest primarily reduces variance, since averaging independent trees decr
 
 ---
 
-### 10.2 Gradient Boosting — LightGBM Mathematical Formulation
+###  Gradient Boosting — LightGBM Mathematical Formulation
 
 LightGBM is based on Gradient Boosting Decision Trees (GBDT). Unlike Random Forest, trees are built sequentially.
 
@@ -94,7 +94,7 @@ Thus, LightGBM is structurally better suited to ranking problems within grouped 
 
 ---
 
-## 11. Feature Importance Analysis — LightGBM Model
+## Feature Importance Analysis — LightGBM Model
 
 Feature importance in LightGBM is computed based on the total contribution of each feature to tree splits across all boosting iterations.
 
@@ -108,7 +108,7 @@ This measures how much each feature reduces the loss function.
 
 In your LightGBM implementation, the most important features were:
 
-#### 1️⃣ `num_to_str_ratio`
+####  `num_to_str_ratio`
 
 This feature captures the difference between numeric and textual content within a row:
 
@@ -116,15 +116,15 @@ $$num\_to\_str\_ratio = num\_ratio - str\_ratio$$
 
 Headers typically contain mostly strings, while data rows contain more numeric values. This makes the feature highly discriminative.
 
-#### 2️⃣ `bold_ratio`
+####  `bold_ratio`
 
 Headers often use formatting emphasis. The model strongly relies on this signal when available. This confirms that Excel styling contains predictive information.
 
-#### 3️⃣ `str_ratio` and `num_ratio`
+####  `str_ratio` and `num_ratio`
 
 These two foundational features encode the core structural difference between header and data rows. Their combined effect reinforces decision boundaries.
 
-#### 4️⃣ `row_position`
+####  `row_position`
 
 Headers are usually located near the top of the sheet. The normalized position:
 
@@ -132,7 +132,7 @@ $$row\_position = \frac{row\_index}{max\_rows}$$
 
 acts as a positional prior.
 
-#### 5️⃣ Delta Features (`delta_str_ratio`, `delta_num_ratio`)
+####  Delta Features (`delta_str_ratio`, `delta_num_ratio`)
 
 These contextual features measure contrast with the next row:
 
@@ -140,7 +140,10 @@ $$\Delta_{\text{str}} = \text{str}_{\text{current}} - \text{str}_{\text{next}}$$
 
 Headers are often followed by numeric data, making this difference large and highly informative.
 
-### 11.2 Interpretation
+
+
+
+###  Interpretation
 
 The importance distribution confirms that the model relies on:
 
@@ -155,7 +158,9 @@ Notably, contextual and ratio-based features dominate over raw textual statistic
 
 ---
 
-## 12. Final Analytical Insight
+
+
+##  Final Analytical Insight
 
 From a modeling perspective:
 
