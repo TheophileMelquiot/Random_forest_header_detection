@@ -112,7 +112,7 @@ In your LightGBM implementation, the most important features were:
 
 This feature captures the difference between numeric and textual content within a row:
 
-$$\text{num\_to\_str\_ratio} = \text{num\_ratio} - \text{str\_ratio}$$
+$$num\_to\_str\_ratio = num\_ratio - str\_ratio$$
 
 Headers typically contain mostly strings, while data rows contain more numeric values. This makes the feature highly discriminative.
 
@@ -128,7 +128,7 @@ These two foundational features encode the core structural difference between he
 
 Headers are usually located near the top of the sheet. The normalized position:
 
-$$\text{row\_position} = \frac{\text{row\_index}}{\text{max\_rows}}$$
+$$row\_position = \frac{row\_index}{max\_rows}$$
 
 acts as a positional prior.
 
