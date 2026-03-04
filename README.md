@@ -97,4 +97,6 @@ The classifier prioritizes precision (no false positives) while maintaining high
 Feature importance analysis confirms that the model leverages structural Excel features rather than lexical memorization, which supports cross-file generalization.
 However, due to near-perfect performance metrics, further validation on fully unseen files is necessary to rule out potential data leakage or positional bias overfitting.
 
+After implementing GroupKFold cross-validation and evaluating on completely unseen Excel files, model performance slightly decreased but remained strong (ROC-AUC = 0.998, PR-AUC = 0.981). The slight recall reduction (0.88 on positive class) confirms realistic generalization behavior rather than overfitting. The model maintains near-perfect precision while demonstrating stable performance across validation folds, indicating strong structural learning rather than dataset memorization.
+
 And in comparaison to the Heuristic algorithm, i did run this two solution on an dataset of 50 excel file and the result where te same for the two solution. 
