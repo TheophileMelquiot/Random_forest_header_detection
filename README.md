@@ -2,6 +2,7 @@
 Creation, training of an random forest model to detect the header inside an excel document and comparaison with an Heuristic Scoring Algorithm model to compare which one is more efficient for this task
 
 ### Go inside the Heuristic scoring model to see the detail of the algorithm and the random forest model to see how i train and create my AI solution 
+## Download and un_zip the package_version_lightlgbm, then follow the installation guide and the model is ready to go on your computer
 
 ## Result 
 
