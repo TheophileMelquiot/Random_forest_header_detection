@@ -38,5 +38,6 @@ def detect_header_row(filepath, max_rows_to_scan=30):
     return best_row
 
 # Usage
-header_line = detect_header_row("FICHES D'ACTIVITES SRC_7.xlsx")
-df = pd.read_excel("FICHES D'ACTIVITES SRC_7.xlsx", header=header_line - 1)
+header_line = detect_header_row("FICHES.xlsx")
+df = pd.read_excel("FICHES.xlsx", header=header_line - 1)
+
