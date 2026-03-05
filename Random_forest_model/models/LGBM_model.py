@@ -209,10 +209,10 @@ warnings.filterwarnings(
 )
 
 # Load your labels (you create this JSON once manually)
-with open("C:/Users/K555275/OneDrive - Banque de France/Bureau/IA/new_files/label.json", encoding="utf-8") as f:
+with open("C:/Users/label.json", encoding="utf-8") as f:
     labels_dict = json.load(f)  # {"file1.xlsx": 3, "file2.xlsx": 1, ...}
 
-X, y, groups = build_training_data("C:/Users/K555275/OneDrive - Banque de France/Bureau/IA/new_files/excel_file", labels_dict)
+X, y, groups = build_training_data("C:/Users/excel_file", labels_dict)
 
 gkf = GroupKFold(n_splits=5)
 
@@ -293,11 +293,11 @@ final_model.fit(
     eval_set=[(X_test, y_test)],
     eval_metric="auc")
 
-with open("C:/Users/K555275/OneDrive - Banque de France/Bureau/IA/new_files/header_detection_output_model.json", encoding="utf-8") as f:
+with open("C:/Users/new_files/header_detection_output_model.json", encoding="utf-8") as f:
     labels_dict_test = json.load(f)  # {"file1.xlsx": 3, "file2.xlsx": 1, ...}
 
 X_ext, y_ext, groups_ext = build_training_data(
-    "C:/Users/K555275/OneDrive - Banque de France/Bureau/IA/new_files/excel_external_test/",
+    "C:/Users/excel_external_test/",
     labels_dict_test
 )
 
@@ -444,3 +444,4 @@ joblib.dump(model, "header_detector.pkl")
 
 
 # %%
+
