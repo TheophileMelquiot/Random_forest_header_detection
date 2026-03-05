@@ -121,7 +121,7 @@ def predict_header_row(filepath, model):
 
 model = joblib.load("header_detector.pkl")
 
-target = target="C:/Users/K555275/OneDrive - Banque de France/Bureau/IA/new_files/excel_file/Copie de R248_ATENA_VIREMENTS_DOMESTIQUES_RECUS_FA.xlsm"
+target = target="C:/Users/docs.xlsm"
 
 header_predictions = predict_header_row(target, model)
 
@@ -147,3 +147,4 @@ for sheet_name, header_row in header_predictions.items():
 
     except Exception as e:
         print(f"❌ Erreur lecture {sheet_name} :", e)
+
