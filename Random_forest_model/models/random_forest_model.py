@@ -179,10 +179,10 @@ warnings.filterwarnings(
 )
 
 # Load your labels (you create this JSON once manually)
-with open("C:/Users/K555275/OneDrive - Banque de France/Bureau/IA/new_files/label.json", encoding="utf-8") as f:
+with open("C:/Users/new_files/label.json", encoding="utf-8") as f:
     labels_dict = json.load(f)  # {"file1.xlsx": 3, "file2.xlsx": 1, ...}
 
-X, y = build_training_data("C:/Users/K555275/OneDrive - Banque de France/Bureau/IA/new_files/excel_file", labels_dict)
+X, y = build_training_data("C:/Users/new_files/excel_file", labels_dict)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
 
@@ -301,3 +301,4 @@ joblib.dump(model, "header_detector.pkl")
 
 
 # %%
+
