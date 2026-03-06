@@ -102,3 +102,5 @@ After implementing GroupKFold cross-validation and evaluating on completely unse
 ![ROC Curve](Images/result_k-cross_validation.png)
 
 ## And in comparaison to the Heuristic algorithm, i did run this two solution on an dataset of 50 excel file and the result where te same for the two solution, except on a serie of particular document which had multiple header section one on top of another, and only the model correctly guess the right header among this mismatch. 
+
+## To conclude, the model as better result as the algorithm but the algorithm is faster to put in place and guess correctly 90 % of the time 
