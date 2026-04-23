@@ -20,6 +20,19 @@ def max_consecutive_empty(values):
     return max_count
 
 
+def compute_basic_ratios(row):
+    values = [cell.value for cell in row]
+    non_empty = [v for v in values if v is not None]
+
+    if not non_empty:
+        return 0, 0
+
+    str_ratio = sum(isinstance(v, str) for v in non_empty) / len(non_empty)
+    num_ratio = sum(isinstance(v, (int, float)) for v in non_empty) / len(non_empty)
+
+    return str_ratio, num_ratio
+
+
 def extract_row_features_from_row(row, total_cols, ws, row_idx):
 
     values = [cell.value for cell in row]
@@ -43,13 +56,17 @@ def extract_row_features_from_row(row, total_cols, ws, row_idx):
         and c.fill.fgColor.rgb != "00000000"
     ) / total_cols
 
-    row_position = row_idx / ws.max_row
-
     str_lengths = [len(str(v)) for v in non_empty if isinstance(v, str)]
     avg_str_len = np.mean(str_lengths or [0])
     std_str_len = np.std(str_lengths or [0])
 
-    header_keywords = ["date", "name", "amount", "total", "id", "ref"]
+    header_keywords = [
+        "date", "total", "id", "ref",
+        "libellé", "libelle", "nombre", "taux",
+        "montant", "appels", "décroché", "decroche",
+        "période", "periode", "trimestre", "compte",
+        "name", "amount",
+    ]
     keyword_hits = sum(
         any(k in str(v).lower() for k in header_keywords)
         for v in non_empty if isinstance(v, str)
@@ -70,13 +87,43 @@ def extract_row_features_from_row(row, total_cols, ws, row_idx):
 
     num_to_str_ratio = num_ratio - str_ratio
 
+    if row_idx < ws.max_row:
+        next_row = list(ws.iter_rows(min_row=row_idx + 1, max_row=row_idx + 1))[0]
+        next_str_ratio, next_num_ratio = compute_basic_ratios(next_row)
+
+        delta_str_ratio = str_ratio - next_str_ratio
+        delta_num_ratio = num_ratio - next_num_ratio
+    else:
+        next_num_ratio = 0.0
+        delta_str_ratio = 0
+        delta_num_ratio = 0
+
+    # --- contextual position features (replace row_position) ---
+
+    prev_row_is_empty = 0.0
+    if row_idx > 1:
+        prev_row = list(ws.iter_rows(min_row=row_idx - 1, max_row=row_idx - 1))[0]
+        prev_non_empty = [c.value for c in prev_row if c.value is not None]
+        prev_row_is_empty = 1.0 if len(prev_non_empty) == 0 else 0.0
+
+    next_row_is_numeric = 1.0 if next_num_ratio >= 0.5 else 0.0
+
+    non_empty_rows_above = sum(
+        1 for r in ws.iter_rows(min_row=1, max_row=row_idx - 1)
+        if any(c.value is not None for c in r)
+    )
+    total_nonempty_rows = sum(
+        1 for r in ws.iter_rows(min_row=1, max_row=ws.max_row)
+        if any(c.value is not None for c in r)
+    )
+    rank_in_nonempty = (non_empty_rows_above + 1) / max(1, total_nonempty_rows)
+
     return [
         fill_ratio,
         str_ratio,
         num_ratio,
         bold_ratio,
         colored_ratio,
-        row_position,
         avg_str_len,
         std_str_len,
         keyword_ratio,
@@ -84,7 +131,12 @@ def extract_row_features_from_row(row, total_cols, ws, row_idx):
         unique_ratio,
         upper_ratio,
         special_char_ratio,
-        num_to_str_ratio
+        num_to_str_ratio,
+        delta_str_ratio,
+        delta_num_ratio,
+        prev_row_is_empty,
+        next_row_is_numeric,
+        rank_in_nonempty,
     ]
 
 

@@ -7,6 +7,8 @@
 import openpyxl
 import numpy as np
 
+MAX_ROWS_SCAN = 30
+
 def max_consecutive_empty(values):
     max_count = 0
     current = 0
@@ -50,13 +52,17 @@ def extract_row_features_from_row(row, total_cols, ws, row_idx):
         and c.fill.fgColor.rgb != "00000000"
     ) / total_cols
 
-    row_position = row_idx / ws.max_row
-
     str_lengths = [len(str(v)) for v in non_empty if isinstance(v, str)]
     avg_str_len = np.mean(str_lengths or [0])
     std_str_len = np.std(str_lengths or [0])
 
-    header_keywords = ["date", "name", "amount", "total", "id", "ref"]
+    header_keywords = [
+        "date", "total", "id", "ref",
+        "libellé", "libelle", "nombre", "taux",
+        "montant", "appels", "décroché", "decroche",
+        "période", "periode", "trimestre", "compte",
+        "name", "amount",
+    ]
     keyword_hits = sum(
         any(k in str(v).lower() for k in header_keywords)
         for v in non_empty if isinstance(v, str)
@@ -79,8 +85,6 @@ def extract_row_features_from_row(row, total_cols, ws, row_idx):
 
     num_to_str_ratio = num_ratio - str_ratio
 
-    num_to_str_ratio = num_ratio - str_ratio
-
     # ===== DIFFERENCE AVEC LIGNE SUIVANTE =====
 
     if row_idx < ws.max_row:
@@ -90,8 +94,29 @@ def extract_row_features_from_row(row, total_cols, ws, row_idx):
         delta_str_ratio = str_ratio - next_str_ratio
         delta_num_ratio = num_ratio - next_num_ratio
     else:
+        next_num_ratio = 0.0
         delta_str_ratio = 0
         delta_num_ratio = 0
+
+    # --- contextual position features (replace row_position) ---
+
+    prev_row_is_empty = 0.0
+    if row_idx > 1:
+        prev_row = list(ws.iter_rows(min_row=row_idx - 1, max_row=row_idx - 1))[0]
+        prev_non_empty = [c.value for c in prev_row if c.value is not None]
+        prev_row_is_empty = 1.0 if len(prev_non_empty) == 0 else 0.0
+
+    next_row_is_numeric = 1.0 if next_num_ratio >= 0.5 else 0.0
+
+    non_empty_rows_above = sum(
+        1 for r in ws.iter_rows(min_row=1, max_row=row_idx - 1)
+        if any(c.value is not None for c in r)
+    )
+    total_nonempty_rows = sum(
+        1 for r in ws.iter_rows(min_row=1, max_row=ws.max_row)
+        if any(c.value is not None for c in r)
+    )
+    rank_in_nonempty = (non_empty_rows_above + 1) / max(1, total_nonempty_rows)
 
     return [
         fill_ratio,
@@ -99,7 +124,6 @@ def extract_row_features_from_row(row, total_cols, ws, row_idx):
         num_ratio,
         bold_ratio,
         colored_ratio,
-        row_position,
         avg_str_len,
         std_str_len,
         keyword_ratio,
@@ -109,7 +133,11 @@ def extract_row_features_from_row(row, total_cols, ws, row_idx):
         special_char_ratio,
         num_to_str_ratio,
         delta_str_ratio,
-        delta_num_ratio   ]
+        delta_num_ratio,
+        prev_row_is_empty,
+        next_row_is_numeric,
+        rank_in_nonempty,
+    ]
 
 
 # In[2]:
@@ -152,16 +180,19 @@ def build_training_data(excel_folder, labels_dict):
             print("❌ Error opening:", matched_file, "|", e)
             continue
 
-        for sheet_name, true_header_row in sheets_info.items():
+        for sheet_name, true_header_rows in sheets_info.items():
 
             if sheet_name not in wb.sheetnames:
                 print("⚠ Sheet not found:", sheet_name, "in", matched_file)
                 continue
 
+            if isinstance(true_header_rows, int):
+                true_header_rows = [true_header_rows]
+
             ws = wb[sheet_name]
 
             total_cols = ws.max_column
-            max_rows_to_scan = min(ws.max_row, 20)
+            max_rows_to_scan = min(ws.max_row, MAX_ROWS_SCAN)
             sheet_id = f"{matched_file}__{sheet_name}"
 
             for row_idx, row in enumerate(
@@ -171,7 +202,7 @@ def build_training_data(excel_folder, labels_dict):
                 features = extract_row_features_from_row(row, total_cols, ws, row_idx)
 
                 if features:
-                    label = 1 if row_idx == true_header_row else 0
+                    label = 1 if row_idx in true_header_rows else 0
                     X.append(features)
                     y.append(label)
                     groups.append(sheet_id)
@@ -233,6 +264,7 @@ for fold, (train_idx, test_idx) in enumerate(gkf.split(X, y, groups)):
         min_child_samples=20,
         subsample=0.8,
         colsample_bytree=0.8,
+        scale_pos_weight=12,
         random_state=42
     )
 
@@ -284,6 +316,7 @@ final_model = lgb.LGBMClassifier(
     min_child_samples=20,
     subsample=0.8,
     colsample_bytree=0.8,
+    scale_pos_weight=12,
     random_state=42
 )
 
@@ -358,7 +391,6 @@ feature_names = [
     "num_ratio",
     "bold_ratio",
     "colored_ratio",
-    "row_position",
     "avg_str_len",
     "std_str_len",
     "keyword_ratio",
@@ -368,7 +400,11 @@ feature_names = [
     "special_char_ratio",
     "num_to_str_ratio",
     "delta_str_ratio",
-    "delta_num_ratio",]
+    "delta_num_ratio",
+    "prev_row_is_empty",
+    "next_row_is_numeric",
+    "rank_in_nonempty",
+]
 
 importance_df = pd.DataFrame({
     "feature": feature_names,
